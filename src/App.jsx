@@ -4,34 +4,54 @@ import MessageList from './MessageList.jsx';
 import ChatBar from './ChatBar.jsx';
 
 class App extends Component {
-  constructor (props) {
+
+  constructor(props) {
     super(props);
+
     this.state = {
-      currentUser: {name: 'Bob'}, // optional. if currentUser is not defined, it means the user is Anonymous
-      messages: [
-        {
-          username: 'Bob',
-          content: 'Has anyone seen my marbles?',
-        },
-        {
-          username: 'Anonymous',
-          content: 'No, I think you lost them. You lost your marbles Bob. You lost them for good.'
-        }
-      ]
+      currentUser: { name: 'Bob' }, // optional. if currentUser is not defined, it means the user is Anonymous
+      messages: []
     }
+    this.addMessage = this.addMessage.bind(this);
   }
 
   componentDidMount() {
-    console.log("componentDidMount <App />");
-    setTimeout(() => {
-      console.log("Simulating incoming message");
-      // Add a new message to the list of messages in the data store
-      const newMessage = {id: 3, username: "Michelle", content: "Hello there!"};
-      const messages = this.state.messages.concat(newMessage)
-      // Update the state of the app component.
-      // Calling setState will trigger a call to render() in App and all child components.
-      this.setState({messages: messages})
-    }, 3000);
+    this.socket = new WebSocket('ws://localhost:3001');
+    console.log('Connected to server.')
+  }
+
+  addMessage(content) {
+
+    const { messages } = this.state;
+
+    const newMessage = {
+      id: content.length + 1,
+      username: 'jam',
+      content: content
+    }
+
+    // Sending messages to the server
+      let newMessageStringify = JSON.stringify(newMessage)
+      if (newMessageStringify){
+          this.socket.send(newMessageStringify);
+      } else {
+          console.log('There is no data to be sent.')
+      }
+
+    // Receiving messages from the server
+    this.socket.onmessage = (event) => {
+      console.log('event.data: ', event.data)
+
+      const message = JSON.parse(event.data);
+
+      if (message) {
+        messages.push(message);
+        this.setState({ messages })
+      } else {
+        console.log('There is no data to be displayed.')
+      }
+    }
+
   }
 
   render() {
@@ -39,8 +59,8 @@ class App extends Component {
     return (
       <div>
         <NavBar />
-        <MessageList messages={this.state.messages}/>
-        <ChatBar currentUser={this.state.currentUser}/>
+        <MessageList messages={this.state.messages} />
+        <ChatBar currentUser={this.state.currentUser} addMessage={this.addMessage} />
       </div>
     )
   }
