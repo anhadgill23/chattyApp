@@ -9,7 +9,7 @@ class App extends Component {
     super(props);
 
     this.state = {
-      currentUser: { name: 'Bob' }, // optional. if currentUser is not defined, it means the user is Anonymous
+      currentUser: { name: 'Bob' },
       messages: [],
       userCount: 0
     }
@@ -18,20 +18,19 @@ class App extends Component {
   }
 
   componentDidMount() {
+    //setting up the webSocket
     this.socket = new WebSocket('ws://localhost:3001');
 
-    // taken from the exercise
-    this.socket.onopen = (event) => {
+    this.socket.onopen = () => {
       console.log("Connected to server");
     };
 
+    //receiving messages from the server
     this.socket.onmessage = (event) => {
       const { currentUser, messages, userCount } = this.state;
       const data = JSON.parse(event.data);
       switch (data.type) {
         case "userCount":
-        //const total = JSON.parse(event.data.numOfUsers)
-          console.log('data: ', data)
           this.setState({ userCount: data.numOfUsers })
           break;
         case "incomingMessage":
@@ -39,14 +38,13 @@ class App extends Component {
           this.setState({ messages: [].concat(messages, [data]) });
           break;
         default:
-          // show an error in the console if the message type is unknown
           throw new Error("Unknown event type " + data.type);
       }
     };
   }
 
   updateCurrentUser(username) {
-    const { currentUser, messages } = this.state;
+    const { currentUser } = this.state;
     const notification = {
       type: 'postNotification',
       content: `${currentUser.name} has changed their name to ${username}.`
@@ -58,9 +56,6 @@ class App extends Component {
   }
 
   addMessage(content) {
-
-    const { messages } = this.state;
-
     const newMessage = {
       type: 'postMessage',
       username: this.state.currentUser.name,
@@ -72,7 +67,7 @@ class App extends Component {
     if (newMessageStringify) {
       this.socket.send(newMessageStringify);
     } else {
-      console.log('There is no data to be sent.')
+      console.log("There is no data to be sent. Unknown event type " + content.type)
     }
   }
 
