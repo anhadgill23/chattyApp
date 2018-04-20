@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 
-export class Message extends Component {
+export default class Message extends Component {
     render() {
         return (
             <div className="message system">
-                Anonymous1 changed their name to nomnom.
+                {this.props.content}
             </div>
         );
     }

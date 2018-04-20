@@ -5,7 +5,7 @@ export default class Navbar extends Component {
         return (
             <nav className="navbar">
                 <a href="/" className="navbar-brand">Chatty</a>
-                <h1>Hello React :)</h1>
+                <p className = "users-online">{this.props.userCount} people are online.</p>
             </nav>
         );
     }

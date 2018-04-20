@@ -10,14 +10,51 @@ class App extends Component {
 
     this.state = {
       currentUser: { name: 'Bob' }, // optional. if currentUser is not defined, it means the user is Anonymous
-      messages: []
+      messages: [],
+      userCount: 0
     }
     this.addMessage = this.addMessage.bind(this);
+    this.updateCurrentUser = this.updateCurrentUser.bind(this);
   }
 
   componentDidMount() {
     this.socket = new WebSocket('ws://localhost:3001');
-    console.log('Connected to server.')
+
+    // taken from the exercise
+    this.socket.onopen = (event) => {
+      console.log("Connected to server");
+    };
+
+    this.socket.onmessage = (event) => {
+      const { currentUser, messages, userCount } = this.state;
+      const data = JSON.parse(event.data);
+      switch (data.type) {
+        case "userCount":
+        //const total = JSON.parse(event.data.numOfUsers)
+          console.log('data: ', data)
+          this.setState({ userCount: data.numOfUsers })
+          break;
+        case "incomingMessage":
+        case "incomingNotification":
+          this.setState({ messages: [].concat(messages, [data]) });
+          break;
+        default:
+          // show an error in the console if the message type is unknown
+          throw new Error("Unknown event type " + data.type);
+      }
+    };
+  }
+
+  updateCurrentUser(username) {
+    const { currentUser, messages } = this.state;
+    const notification = {
+      type: 'postNotification',
+      content: `${currentUser.name} has changed their name to ${username}.`
+    }
+    let notificationObject = JSON.stringify(notification);
+    this.socket.send(notificationObject);
+
+    this.setState({ currentUser: { name: username } });
   }
 
   addMessage(content) {
@@ -25,42 +62,26 @@ class App extends Component {
     const { messages } = this.state;
 
     const newMessage = {
-      id: content.length + 1,
-      username: 'jam',
+      type: 'postMessage',
+      username: this.state.currentUser.name,
       content: content
     }
 
     // Sending messages to the server
-      let newMessageStringify = JSON.stringify(newMessage)
-      if (newMessageStringify){
-          this.socket.send(newMessageStringify);
-      } else {
-          console.log('There is no data to be sent.')
-      }
-
-    // Receiving messages from the server
-    this.socket.onmessage = (event) => {
-      console.log('event.data: ', event.data)
-
-      const message = JSON.parse(event.data);
-
-      if (message) {
-        messages.push(message);
-        this.setState({ messages })
-      } else {
-        console.log('There is no data to be displayed.')
-      }
+    let newMessageStringify = JSON.stringify(newMessage)
+    if (newMessageStringify) {
+      this.socket.send(newMessageStringify);
+    } else {
+      console.log('There is no data to be sent.')
     }
-
   }
 
   render() {
-
     return (
       <div>
-        <NavBar />
+        <NavBar userCount = {this.state.userCount}/>
         <MessageList messages={this.state.messages} />
-        <ChatBar currentUser={this.state.currentUser} addMessage={this.addMessage} />
+        <ChatBar currentUser={this.state.currentUser} updateCurrentUser={this.updateCurrentUser} addMessage={this.addMessage} />
       </div>
     )
   }
