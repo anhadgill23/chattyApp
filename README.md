@@ -4,7 +4,7 @@ A single-page chat application, Chatty allows multiple users to connect and chat
 
 ## Final Project
 
-!["Landing Page"]()
+!["Landing Page"](https://github.com/anhadgill23/chattyApp/blob/master/docs/chattyApp_messages.png?raw=true)
 
 
 ## Getting started
